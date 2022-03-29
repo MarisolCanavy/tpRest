@@ -1,8 +1,11 @@
 package com.tprest.tp;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
@@ -15,9 +18,39 @@ public class Webservices {
 
     Contacts contacts = new Contacts();
 
+/*
     @GetMapping(value = "/contacts", produces = {"application/xml","application/json"})
     Contacts getContacts() {
         readFromXml();
+        return contacts;
+    }
+*/
+
+/*
+    @GetMapping(value = "/contacts", produces = {"application/xml","application/json"})
+    Contacts getContacts(HttpServletRequest request) {
+        readFromXml();
+        System.out.println("L'URL utilisé par le client est '"+request.getRequestURI()+"'.");
+        return contacts;
+    }
+*/
+
+    @GetMapping(value = "/contacts", produces = {"application/xml","application/json"})
+    Contacts getContacts(@RequestParam(defaultValue = "0") int annee) {
+        readFromXml();
+        Contacts contactsSelect = new Contacts();
+        if(!contacts.getContacts().isEmpty()){
+            if(annee != 0) {
+                for (Contact contact1 : contacts.getContacts()) {
+                    if (contact1.getAnnee() == annee) {
+                        contactsSelect.getContacts().add(contact1);
+                    }
+                }
+                return contactsSelect;
+            }else{
+                return contacts;
+            }
+        }
         return contacts;
     }
 
@@ -82,6 +115,7 @@ public class Webservices {
         return contacts;
     }
 
+    /*
     @DeleteMapping(value="/contact/{id}")
     Contacts deleteContact(@PathVariable int id) {
         readFromXml();
@@ -100,6 +134,29 @@ public class Webservices {
         saveToXml();
         // supprimer le contact d'identifiant spécifié
         return contacts;
+    }
+    */
+
+    @DeleteMapping(value="/contact/{id}")
+    ResponseEntity<Contacts> deleteContact(@PathVariable int id) {
+        readFromXml();
+        Contact contact = null;
+        if(!contacts.getContacts().isEmpty()) {
+            for (Contact c : contacts.getContacts()) {
+                if (c.getId() == id) {
+                    contact = c;
+                }
+            }
+        }
+        if (contact != null) {
+            contacts.getContacts().remove(contact);
+            saveToXml();
+            return new ResponseEntity(contacts, HttpStatus.OK);
+        }
+        else {
+            saveToXml();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     String path ="/Users/marisolcanavy/Desktop/ISIS/Alternance/FIA4/SOA - S2/2. TP rest/reco/tp";
